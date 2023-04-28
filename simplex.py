@@ -1,6 +1,14 @@
 import numpy as np
 from fractions import Fraction
 
+def check_same_chars(a, b):
+    if len(a) != len(b):
+        return False
+    for char in a:
+        if char not in b:
+            return False
+    return True
+
 class LinearProgramming:
     def __init__(self, num_variables, num_constraints):
         self.num_variables = num_variables
@@ -16,7 +24,9 @@ class LinearProgramming:
         self.basics = np.array([f'w_{i+1}' for i in range(num_constraints)])
         self.non_basics = np.array(self.name_variables)
         self.status = None
-        self.priority_index = dict()            
+        self.priority_index = dict()
+        self.first_dictionary = None  
+        self.current_dictionary = None   
         
     @property
     def name_variables(self):
@@ -34,6 +44,14 @@ class LinearProgramming:
         self.b = np.array(b)
         self.signs = np.array(signs)
         self.restricted = np.array(restricted)
+        
+    def update_first_dictionary(self, first_dict):
+        self.first_dictionary = first_dict
+        return first_dict
+        
+    def update_cur_dictionary(self, cur_dict):
+        self.cur_dictionary = cur_dict
+        return cur_dict
         
     def __str__(self):
             
@@ -62,7 +80,7 @@ class LinearProgramming:
                 res += f'{self.name_variables[i]} >= 0, '
             else:
                 res += f'{self.name_variables[i]} is no bound, '
-                
+        
         if self.restricted[self.num_variables-1] == 0:
             res += f'{self.name_variables[-1]} <= 0'
         elif self.restricted[self.num_variables-1] == 1:
@@ -92,6 +110,7 @@ class LinearProgramming:
                     equations += f' + {abs(tableau[i,j])}{self.non_basics[j]}'
             equations += '\n'
         print(equations)
+        self.current_dictionary = self.update_cur_dictionary(f'{equations}')
     
     def normalize(self):
         c_new = np.copy(self.c)
@@ -106,7 +125,7 @@ class LinearProgramming:
         new_problem = LinearProgramming(num_variables_new, self.num_constraints)
         
         name_variables_new = []
-        
+
         for i in range(self.num_variables):
             tmp = np.where(unrestricted_indices == i)[0]
             if len(tmp):
@@ -290,9 +309,15 @@ class LinearProgramming:
             optimal_value, solution = np.array([]), np.array([])
             return optimal_value, solution
         count = 1
+        count_duplicate = 0
         if print_details:
             print('*'*30 + f'Dictionary {count}' + '*'*30)
             normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
+            if count == 1:
+                count_duplicate += 1
+                normalize_problem.first_dictionary = self.update_first_dictionary(f'{normalize_problem.current_dictionary}')
+            elif check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True:
+                count_duplicate += 1
             count += 1
         while np.any(z_coef < 0):
             try:
@@ -309,7 +334,14 @@ class LinearProgramming:
             if print_details:
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
                 normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
+                if count == 1:
+                    count_duplicate += 1
+                    normalize_problem.first_dictionary = self.update_first_dictionary(f'{normalize_problem.current_dictionary}')
+                elif check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True:
+                    count_duplicate += 1
                 count += 1
+            if check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True and count_duplicate == 2:
+                return False
             
         if self.objective_type.strip().lower() == 'max':
             optimal_value *= -1

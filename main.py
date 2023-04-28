@@ -27,7 +27,12 @@ A_frac = np.array([[Fraction(col) for col in row] for row in A])
 
 problem = LinearProgramming(num_variables, num_constraints)
 problem.generate(objective_type, c_frac, A_frac, b_frac, signs, restricted)
-optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=True)
+if problem.optimize(type_rotate='Dantzig', print_details=True) != False:
+    optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=True)
+else:
+    print('\nCan not solve by Dantzig because of duplicate dictionary')
+    print('*'*30 + f'Bland' + '*'*30 + '\n')
+    optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
 print(f'Optimal value: {optimal_value}')
 
 res = 'Solution: ('
