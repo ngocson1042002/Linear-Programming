@@ -1,6 +1,7 @@
 import numpy as np
 from fractions import Fraction
 from simplex import LinearProgramming
+import os
 
 with open('input.txt', 'r') as rf:
         lines = rf.readlines()
@@ -27,15 +28,21 @@ A_frac = np.array([[Fraction(col) for col in row] for row in A])
 
 problem = LinearProgramming(num_variables, num_constraints)
 problem.generate(objective_type, c_frac, A_frac, b_frac, signs, restricted)
-if problem.optimize(type_rotate='Dantzig', print_details=True) != False:
-    optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=True)
-else:
-    print('\nCan not solve by Dantzig because of duplicate dictionary')
-    print('*'*30 + f'Bland' + '*'*30 + '\n')
-    optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
-print(f'Optimal value: {optimal_value}')
 
-res = 'Solution: ('
-for i in range(num_variables-1):
-    res += f'{solution[i]}, '
-print(res + f'{solution[num_variables-1]})')
+try:
+    optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=True)
+except Exception as err:
+    os.system('cls')
+    print(err)
+    print('\n' + '*'*35 + f'Bland' + '*'*35 + '\n')
+    optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
+
+if problem.status == 2:
+    print('No solution')
+else:
+    print(f'Optimal value: {optimal_value}')
+
+    res = 'Solution: ('
+    for i in range(num_variables-1):
+        res += f'{solution[i]}, '
+    print(res + f'{solution[num_variables-1]})')

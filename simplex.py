@@ -1,5 +1,6 @@
 import numpy as np
 from fractions import Fraction
+import os
 
 def check_same_chars(a, b):
     if len(a) != len(b):
@@ -341,7 +342,7 @@ class LinearProgramming:
                     count_duplicate += 1
                 count += 1
             if check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True and count_duplicate == 2:
-                return False
+                raise Exception('Warning: The simplex method with Dantzig occurs cycling!')
             
         if self.objective_type.strip().lower() == 'max':
             optimal_value *= -1
@@ -387,6 +388,10 @@ if __name__ == "__main__":
 
     problem = LinearProgramming(4,3)
     problem.generate('min', c_frac, A_frac, b_frac, ['<=', '<=', '<='], (1, 1, 1,1))
-    print(problem.optimize(type_rotate='Bland', print_details=True))
-
-
+    try:
+        problem.optimize(type_rotate='Dantzig', print_details=True)
+    except Exception as err:
+        os.system('cls')
+        print(err)
+        print('\n' + '*'*35 + f'Bland' + '*'*35 + '\n')
+        optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
