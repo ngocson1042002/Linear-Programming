@@ -3,6 +3,9 @@ from fractions import Fraction
 import os
 
 def check_same_chars(a, b):
+    a = a.split(" ")
+    b = b.split(" ")
+    
     if len(a) != len(b):
         return False
     for char in a:
