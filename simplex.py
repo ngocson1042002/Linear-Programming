@@ -2,6 +2,8 @@ import numpy as np
 from fractions import Fraction
 import os
 
+MAX_INT = 9999999
+
 def check_same_chars(a, b):
     a = a.split(" ")
     b = b.split(" ")
@@ -30,7 +32,8 @@ class LinearProgramming:
         self.status = None
         self.priority_index = dict()
         self.first_dictionary = None  
-        self.current_dictionary = None   
+        self.current_dictionary = None
+        self.arti_variables = None 
         
     @property
     def name_variables(self):
@@ -95,6 +98,7 @@ class LinearProgramming:
         return res
     
     def print_dictionary(self, basic_solution, tableau, objective_coef, c):
+
         z = f'z = {c}'
         for i in range(self.num_variables):
             if objective_coef[i] >= 0:
@@ -122,6 +126,7 @@ class LinearProgramming:
         b_new = np.copy(self.b)
         signs_new = np.copy(self.signs)
         num_variables_new = self.num_variables
+        num_constraints_new = self.num_constraints
 
         eq_indices  = np.where(self.signs == '=')[0]
         if len(eq_indices) > 0:
@@ -129,7 +134,7 @@ class LinearProgramming:
             A_new = np.vstack((A_new, A_new[eq_indices]*(-1)))
             signs_new = np.hstack((signs_new, ['<=']*len(eq_indices)))
             b_new = np.hstack((b_new, b_new[eq_indices]*(-1)))
-            num_constraints_new = self.num_constraints + len(eq_indices)
+            num_constraints_new  += len(eq_indices)
 
         neg_indices = np.where(self.restricted == 0)[0]
         unrestricted_indices = np.where(self.restricted == None)[0]
@@ -311,11 +316,51 @@ class LinearProgramming:
 
         tableau, basic_solution, z_coef = normalize_problem.A.copy(), normalize_problem.b.copy(), normalize_problem.c.copy()
         return tableau, basic_solution, z_coef, optimal_value, infeasibility
+
+    def process_equality(self, problem):
+        num_equality_constraints = len(self.signs[self.signs == '='])
+        num_basics = len(problem.basics)
+        j = 0
+        basics_to_replace = []
+        identity_matrices = []
+        artificial_variables = []
         
-        
+        while num_equality_constraints:
+            basics_to_replace.append(problem.basics[num_basics - num_equality_constraints])
+            identity_matrices.append([-1 if k == num_basics - num_equality_constraints else 0 for k in range(num_basics)])
+            problem.b[num_basics - num_equality_constraints] *= -1
+            problem.A[num_basics - num_equality_constraints, :] *= -1
+            problem.basics[num_basics - num_equality_constraints] = f'a_{j+1}'
+            artificial_variables.append(f'a_{j+1}')
+            j += 1
+            num_equality_constraints -= 1
+
+        problem.arti_variables = np.array(artificial_variables)
+        identity_matrices = np.array(identity_matrices, dtype=problem.A.dtype)
+        problem.A = np.hstack((problem.A, identity_matrices.T))
+        problem.non_basics = np.hstack((problem.non_basics, basics_to_replace))
+        problem.c = np.hstack((problem.c, [0] * len(self.signs[self.signs == '='])))
+        problem.num_variables += len(self.signs[self.signs == '='])
+
+        num_equality_constraints = len(self.signs[self.signs == '='])
+        t = 0
+        while num_equality_constraints:
+            problem.c += (-MAX_INT) * problem.A[num_basics - num_equality_constraints, :]
+            t += MAX_INT * problem.b[num_basics - num_equality_constraints]
+            num_equality_constraints -= 1
+            
+        return t
+
+  
     def optimize(self,type_rotate='Dantzig', print_details=False):
         normalize_problem = self.normalize()
-        print(normalize_problem)
+        flag = False
+        if np.any(self.signs == '='):
+            t = self.process_equality(normalize_problem)
+            flag = True
+            print(f'Artifical variables: {normalize_problem.arti_variables}')
+
+
         tableau, basic_solution, z_coef, optimal_value, infeasibility = self.initial_feasible_solution(normalize_problem, print_details)
         if infeasibility == True:
             self.status = 2 # No solution
@@ -358,9 +403,12 @@ class LinearProgramming:
             if check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True and count_duplicate == 2:
                 raise Exception('Warning: The simplex method with Dantzig occurs cycling!')
             
+        if flag:
+            optimal_value += t
+            
         if self.objective_type.strip().lower() == 'max':
             optimal_value *= -1
-            
+
         self.status=1    # ??????
 
         # if np.any(basic_solution < 0):
@@ -370,10 +418,20 @@ class LinearProgramming:
         # else:
         #     self.status = 1 # Infinitely many roots
         #     return optimal_value, np.array([],dtype=self.A.dtype)
-            
-        x = np.zeros(normalize_problem.num_variables,dtype=self.A.dtype)
-        for i in range(normalize_problem.num_variables):
+        
+        l = len(np.isin(normalize_problem.arti_variables, normalize_problem.non_basics))
+        for i, basic in enumerate(normalize_problem.basics):
+            if normalize_problem.b[i] == 0 and np.where(normalize_problem.arti_variables == basic)[0].size:
+                l += 1
+        if l != normalize_problem.arti_variables.size:
+            self.status = 2
+            optimal_value, solution = np.array([]), np.array([])
+            return optimal_value, solution
+
+        x = np.zeros(normalize_problem.num_variables-l,dtype=self.A.dtype)
+        for i in range(normalize_problem.num_variables-l):
             tmp = np.where(normalize_problem.basics == normalize_problem.name_variables[i])[0]
+
             if len(tmp):
                 x[i] = basic_solution[tmp[0]]
         

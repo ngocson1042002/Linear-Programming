@@ -32,7 +32,7 @@ problem.generate(objective_type, c_frac, A_frac, b_frac, signs, restricted)
 try:
     optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=True)
 except Exception as err:
-    os.system('cls')
+    # os.system('cls')
     print(err)
     print('\n' + '*'*35 + f'Bland' + '*'*35 + '\n')
     optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
