@@ -317,7 +317,10 @@ class LinearProgramming:
         tableau, basic_solution, z_coef = normalize_problem.A.copy(), normalize_problem.b.copy(), normalize_problem.c.copy()
         return tableau, basic_solution, z_coef, optimal_value, infeasibility
 
-    def process_equality(self, problem):
+    def process_equality(self, problem, initial_op):
+        if not np.any(self.signs == '='):
+            return False
+
         num_equality_constraints = len(self.signs[self.signs == '='])
         num_basics = len(problem.basics)
         j = 0
@@ -343,29 +346,33 @@ class LinearProgramming:
         problem.num_variables += len(self.signs[self.signs == '='])
 
         num_equality_constraints = len(self.signs[self.signs == '='])
-        t = 0
+
         while num_equality_constraints:
             problem.c += (-MAX_INT) * problem.A[num_basics - num_equality_constraints, :]
-            t += MAX_INT * problem.b[num_basics - num_equality_constraints]
+            initial_op[0] += MAX_INT * problem.b[num_basics - num_equality_constraints]
             num_equality_constraints -= 1
             
-        return t
+        return True
 
   
     def optimize(self,type_rotate='Dantzig', print_details=False):
         normalize_problem = self.normalize()
         flag = False
-        if np.any(self.signs == '='):
-            t = self.process_equality(normalize_problem)
+        init_optimal=[0]
+        if self.process_equality(normalize_problem, init_optimal):
             flag = True
             print(f'Artifical variables: {normalize_problem.arti_variables}')
 
-
         tableau, basic_solution, z_coef, optimal_value, infeasibility = self.initial_feasible_solution(normalize_problem, print_details)
+
         if infeasibility == True:
             self.status = 2 # No solution
             optimal_value, solution = np.array([]), np.array([])
             return optimal_value, solution
+
+        if flag:
+            optimal_value += init_optimal[0]
+            
         count = 1
         count_duplicate = 0
         if print_details:
@@ -402,9 +409,6 @@ class LinearProgramming:
                 count += 1
             if check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True and count_duplicate == 2:
                 raise Exception('Warning: The simplex method with Dantzig occurs cycling!')
-            
-        if flag:
-            optimal_value += t
             
         if self.objective_type.strip().lower() == 'max':
             optimal_value *= -1
