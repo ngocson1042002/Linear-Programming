@@ -58,7 +58,7 @@ class LinearProgramming:
         return cur_dict
         
     def __str__(self):
-            
+
         res = f'{self.objective_type.title()}\t\t{self.c[0]}{self.name_variables[0]}'
         for i in range(1, self.num_variables):
             if self.c[i] >= 0:
@@ -123,11 +123,19 @@ class LinearProgramming:
         signs_new = np.copy(self.signs)
         num_variables_new = self.num_variables
 
+        eq_indices  = np.where(self.signs == '=')[0]
+        if len(eq_indices) > 0:
+            signs_new[signs_new == '='] = '<='
+            A_new = np.vstack((A_new, A_new[eq_indices]*(-1)))
+            signs_new = np.hstack((signs_new, ['<=']*len(eq_indices)))
+            b_new = np.hstack((b_new, b_new[eq_indices]*(-1)))
+            num_constraints_new = self.num_constraints + len(eq_indices)
+
         neg_indices = np.where(self.restricted == 0)[0]
         unrestricted_indices = np.where(self.restricted == None)[0]
         num_variables_new += len(unrestricted_indices)
-        new_problem = LinearProgramming(num_variables_new, self.num_constraints)
-        
+        new_problem = LinearProgramming(num_variables_new, num_constraints_new)
+
         name_variables_new = []
 
         for i in range(self.num_variables):
@@ -185,8 +193,8 @@ class LinearProgramming:
                         
         ratio_indices = np.where(tableau[:, entering_variable_index] > 0)[0]
         if ratio_indices.size == 0:
-            self.status = 0
             return
+
         ratio = basic_solution[ratio_indices]/tableau[:, entering_variable_index][tableau[:, entering_variable_index] > 0]
         leaving_variable_index = ratio_indices[ratio.argmin()]
 
@@ -307,6 +315,7 @@ class LinearProgramming:
         
     def optimize(self,type_rotate='Dantzig', print_details=False):
         normalize_problem = self.normalize()
+        print(normalize_problem)
         tableau, basic_solution, z_coef, optimal_value, infeasibility = self.initial_feasible_solution(normalize_problem, print_details)
         if infeasibility == True:
             self.status = 2 # No solution
@@ -328,6 +337,8 @@ class LinearProgramming:
                 tableau, basic_solution, z_coef, optimal_value = normalize_problem.update_tableau(tableau, basic_solution, z_coef, optimal_value, type_rotate, print_details)
             except:              
                 # Unboundedness
+                self.status = 0
+
                 if self.objective_type.strip().lower() == 'max':
                     optimal_value = float('inf')
                 else:
@@ -350,13 +361,15 @@ class LinearProgramming:
         if self.objective_type.strip().lower() == 'max':
             optimal_value *= -1
             
-        if np.any(basic_solution < 0):
-            self.status = 2 # No solution
-        elif np.all(basic_solution > 0):
-            self.status = 3 # Optimization terminated successfully
-        else:
-            self.status = 1 # Infinitely many roots
-            return optimal_value, np.array([],dtype=self.A.dtype)
+        self.status=1    # ??????
+
+        # if np.any(basic_solution < 0):
+        #     self.status = 2 # No solution
+        # elif np.all(basic_solution > 0):
+        #     self.status = 3 # Optimization terminated successfully
+        # else:
+        #     self.status = 1 # Infinitely many roots
+        #     return optimal_value, np.array([],dtype=self.A.dtype)
             
         x = np.zeros(normalize_problem.num_variables,dtype=self.A.dtype)
         for i in range(normalize_problem.num_variables):

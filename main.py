@@ -37,11 +37,12 @@ except Exception as err:
     print('\n' + '*'*35 + f'Bland' + '*'*35 + '\n')
     optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
 
-if problem.status == 2:
+if problem.status == 2: # No solution
     print('No solution')
-else:
+elif problem.status == 0: # Unboundedness
+    print(f'Optimal value: {optimal_value}\nSolution:{solution}')
+else: # ??????
     print(f'Optimal value: {optimal_value}')
-
     res = 'Solution: ('
     for i in range(num_variables-1):
         res += f'{solution[i]}, '
