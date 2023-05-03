@@ -32,16 +32,18 @@ problem.generate(objective_type, c_frac, A_frac, b_frac, signs, restricted)
 try:
     optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=True)
 except Exception as err:
-    os.system('cls')
+    # os.system('cls')
     print(err)
     print('\n' + '*'*35 + f'Bland' + '*'*35 + '\n')
     optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
 
 if problem.status == 2: # No solution
-    print('No solution')
+    print('Status: No solution')
 elif problem.status == 0: # Unboundedness
-    print(f'Optimal value: {optimal_value}\nSolution:{solution}')
+    print('Status: The problem is unboundedness')
+    print(f'Optimal value: {optimal_value}')
 else: # ??????
+    print('Status: The solution was found')
     print(f'Optimal value: {optimal_value}')
     res = 'Solution: ('
     for i in range(num_variables-1):

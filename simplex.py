@@ -245,12 +245,6 @@ class LinearProgramming:
             
             if print_details:
                 print('*'*30 + f'Auxiliary Problem' + '*'*30)
-                if print_details:
-                    for key, value in self.var_change.items():
-                        if len(value) == 3:
-                            print(f'{key} = {value[0]} - {value[1]}')
-                        elif value[-1] == 1:
-                            print(f'{value[0]} = -{key}')
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
                 aux_problem.print_dictionary(aux_b, aux_A, aux_c, optimal_value)
                 count += 1
@@ -317,6 +311,9 @@ class LinearProgramming:
         tableau, basic_solution, z_coef = normalize_problem.A.copy(), normalize_problem.b.copy(), normalize_problem.c.copy()
         return tableau, basic_solution, z_coef, optimal_value, infeasibility
 
+    # def isEqualityConstraint(self):
+
+
     def process_equality(self, problem, initial_op):
         if not np.any(self.signs == '='):
             return False
@@ -357,11 +354,20 @@ class LinearProgramming:
   
     def optimize(self,type_rotate='Dantzig', print_details=False):
         normalize_problem = self.normalize()
+
+        if print_details:
+            for key, value in self.var_change.items():
+                if len(value) == 3:
+                    print(f'{key} = {value[0]} - {value[1]}')
+                elif value[-1] == 1:
+                    print(f'{value[0]} = -{key}')
+
         flag = False
         init_optimal=[0]
+
         if self.process_equality(normalize_problem, init_optimal):
             flag = True
-            print(f'Artifical variables: {normalize_problem.arti_variables}')
+            print(f'Artifical variables: {normalize_problem.arti_variables}\n')
 
         tableau, basic_solution, z_coef, optimal_value, infeasibility = self.initial_feasible_solution(normalize_problem, print_details)
 
