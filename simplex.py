@@ -454,15 +454,19 @@ class LinearProgramming:
         # else:
         #     self.status = 1 # Infinitely many roots
         #     return optimal_value, np.array([],dtype=self.A.dtype)
-        
-        l = len(np.isin(normalize_problem.arti_variables, normalize_problem.non_basics))
-        for i, basic in enumerate(normalize_problem.basics):
-            if normalize_problem.b[i] == 0 and np.where(normalize_problem.arti_variables == basic)[0].size:
-                l += 1
-        if l != normalize_problem.arti_variables.size:
-            self.status = 2
-            optimal_value, solution = np.array([]), np.array([])
-            return optimal_value, solution
+
+        if normalize_problem.arti_variables != None:
+            l = len(np.isin(normalize_problem.arti_variables, normalize_problem.non_basics))
+
+            for i, basic in enumerate(normalize_problem.basics):
+                if normalize_problem.b[i] == 0 and np.where(normalize_problem.arti_variables == basic)[0].size:
+                    l += 1
+            if l != normalize_problem.arti_variables.size:
+                self.status = 2
+                optimal_value, solution = np.array([]), np.array([])
+                return optimal_value, solution
+        else:
+            l = 0
 
         x = np.zeros(normalize_problem.num_variables-l,dtype=self.A.dtype)
         for i in range(normalize_problem.num_variables-l):
@@ -470,7 +474,7 @@ class LinearProgramming:
 
             if len(tmp):
                 x[i] = basic_solution[tmp[0]]
-        
+
         solution = np.zeros(self.num_variables,dtype=self.A.dtype)
         p = 0
         for i, name in enumerate(self.name_variables):
