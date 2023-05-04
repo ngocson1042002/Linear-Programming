@@ -315,7 +315,25 @@ class LinearProgramming:
         tableau, basic_solution, z_coef = normalize_problem.A.copy(), normalize_problem.b.copy(), normalize_problem.c.copy()
         return tableau, basic_solution, z_coef, optimal_value, infeasibility
 
-    # def isEqualityConstraint(self):
+    def identify_equality_constraints(self):
+        n = self.A.shape[0]
+        row_indices = []
+        for i in range(n):
+            is_equal = np.all(self.A == self.A[i,:], axis=1)
+            equal_indices = np.where(is_equal)[0]
+            row_indices.append(equal_indices)
+
+        indices = set()
+        for i, t in enumerate(row_indices):
+            if t[0] == i:
+                indices.add(i)
+            if t.size > 1:
+                self.signs[i] = '='
+        indices = list(indices)
+        self.A = self.A[indices]
+        self.b = self.b[indices]
+        self.signs = self.signs[indices]
+        self.num_constraints = self.A.shape[0]
 
 
     def process_equality(self, problem, initial_op):

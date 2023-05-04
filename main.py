@@ -28,9 +28,10 @@ A_frac = np.array([[Fraction(col) for col in row] for row in A])
 
 problem = LinearProgramming(num_variables, num_constraints)
 problem.generate(objective_type, c_frac, A_frac, b_frac, signs, restricted)
+problem.identify_equality_constraints()
 
 try:
-    optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=False)
+    optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=True)
 except Exception as err:
     # os.system('cls')
     print(err)
