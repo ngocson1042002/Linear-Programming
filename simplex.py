@@ -96,6 +96,18 @@ class LinearProgramming:
             res += f'{self.name_variables[-1]} is no bound'
             
         return res
+
+    def generate_equations(self, basic_solution, tableau):
+        equations = ''
+        for i in range(self.num_constraints):
+            equations += f'{self.basics[i]} = {basic_solution[i]}'
+            for j in range(self.num_variables):
+                if tableau[i,j] >= 0:
+                    equations += f' - {tableau[i,j]}{self.non_basics[j]}'
+                else:
+                    equations += f' + {abs(tableau[i,j])}{self.non_basics[j]}'
+            equations += '\n'
+        return equations
     
     def print_dictionary(self, basic_solution, tableau, objective_coef, c):
 
@@ -108,15 +120,7 @@ class LinearProgramming:
         print(z)
         print('-'*self.num_variables*14)
         
-        equations = ''
-        for i in range(self.num_constraints):
-            equations += f'{self.basics[i]} = {basic_solution[i]}'
-            for j in range(self.num_variables):
-                if tableau[i,j] >= 0:
-                    equations += f' - {tableau[i,j]}{self.non_basics[j]}'
-                else:
-                    equations += f' + {abs(tableau[i,j])}{self.non_basics[j]}'
-            equations += '\n'
+        equations = self.generate_equations(basic_solution, tableau)
         print(equations)
         self.current_dictionary = self.update_cur_dictionary(f'{equations}')
     
@@ -367,7 +371,8 @@ class LinearProgramming:
 
         if self.process_equality(normalize_problem, init_optimal):
             flag = True
-            print(f'Artifical variables: {normalize_problem.arti_variables}\n')
+            if print_details:
+                print(f'Artifical variables: {normalize_problem.arti_variables}\n')
 
         tableau, basic_solution, z_coef, optimal_value, infeasibility = self.initial_feasible_solution(normalize_problem, print_details)
 
@@ -381,15 +386,16 @@ class LinearProgramming:
             
         count = 1
         count_duplicate = 0
+        equations = normalize_problem.generate_equations(basic_solution, tableau)
+        normalize_problem.first_dictionary = normalize_problem.update_first_dictionary(equations)
+
+
         if print_details:
             print('*'*30 + f'Dictionary {count}' + '*'*30)
             normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
-            if count == 1:
-                count_duplicate += 1
-                normalize_problem.first_dictionary = self.update_first_dictionary(f'{normalize_problem.current_dictionary}')
-            elif check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True:
-                count_duplicate += 1
             count += 1
+
+
         while np.any(z_coef < 0):
             try:
                 tableau, basic_solution, z_coef, optimal_value = normalize_problem.update_tableau(tableau, basic_solution, z_coef, optimal_value, type_rotate, print_details)
@@ -407,13 +413,15 @@ class LinearProgramming:
             if print_details:
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
                 normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
-                if count == 1:
-                    count_duplicate += 1
-                    normalize_problem.first_dictionary = self.update_first_dictionary(f'{normalize_problem.current_dictionary}')
-                elif check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True:
-                    count_duplicate += 1
                 count += 1
-            if check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True and count_duplicate == 2:
+
+            equations = normalize_problem.generate_equations(basic_solution, tableau)
+            normalize_problem.current_dictionary = normalize_problem.update_cur_dictionary(equations)
+            isSameDict = check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True
+            
+            if isSameDict:
+                count_duplicate += 1
+            if isSameDict and count_duplicate == 2:
                 raise Exception('Warning: The simplex method with Dantzig occurs cycling!')
             
         if self.objective_type.strip().lower() == 'max':
