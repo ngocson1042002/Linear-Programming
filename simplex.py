@@ -455,7 +455,7 @@ class LinearProgramming:
         #     self.status = 1 # Infinitely many roots
         #     return optimal_value, np.array([],dtype=self.A.dtype)
 
-        if list(normalize_problem.arti_variables):
+        if normalize_problem.arti_variables is not None:
             l = len(np.isin(normalize_problem.arti_variables, normalize_problem.non_basics))
 
             for i, basic in enumerate(normalize_problem.basics):
