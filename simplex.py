@@ -7,7 +7,6 @@ MAX_INT = 9999999
 def check_same_chars(a, b):
     a = a.split(" ")
     b = b.split(" ")
-    
     if len(a) != len(b):
         return False
     for char in a:
@@ -122,7 +121,6 @@ class LinearProgramming:
         
         equations = self.generate_equations(basic_solution, tableau)
         print(equations)
-        self.current_dictionary = self.update_cur_dictionary(f'{equations}')
     
     def normalize(self):
         c_new = np.copy(self.c)
