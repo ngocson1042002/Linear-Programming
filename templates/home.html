@@ -1,0 +1,61 @@
+<!-- home.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enter coefficients to solve the problem (coefficients are separated by spaces)</title>
+</head>
+<body>
+    <form action="/result" method="post">
+        <label for="input">Input the numbers of variables:</label>
+        <input type="text" id="input" name="input"><br><br>
+
+        <label for="input1">Input the numbers of constraints:</label>
+        <input type="text" id="input1" name="input1">
+
+        <button type="button" id="create-constraint">Render</button><br><br>
+
+        <label for="input2">Input the objective type (min or max):</label>
+        <input type="text" id="input2" name="input2"><br><br>
+
+        <label for="input3">Input the objective function coefficient:</label>
+        <input type="text" id="input3" name="input3"><br><br>
+
+        <h3>Constraint:</h3>
+        <div id="input2-fields"></div>
+
+        <label for="input4">Input the restricted:</label>
+        <input type="text" id="input4" name="input4"><br><br>
+
+        <input type="submit" value="Submit">
+    </form>
+</body>
+<script>
+    document.getElementById("create-constraint").addEventListener("click", function() {
+        var input2Value = parseInt(document.getElementById("input1").value);
+        var input2Fields = document.getElementById("input2-fields");
+        console.log(input2Value);
+  
+      // Clear previous fields
+      input2Fields.innerHTML = "";
+  
+      // Add new fields
+      for (var i = 0; i < input2Value; i++) {
+        var label = document.createElement("label");
+        label.setAttribute("for", "input2_" + i);
+        label.innerHTML = "Constraint " + (i + 1) + ": ";
+        input2Fields.appendChild(label);
+        
+        var input2Field = document.createElement("input");
+        input2Field.setAttribute("type", "text");
+        input2Field.setAttribute("name", "input2_" + i);
+        input2Field.setAttribute("id", "input2_" + i);
+        
+        input2Fields.appendChild(input2Field);
+
+        input2Fields.appendChild(document.createElement("br"));
+        input2Fields.appendChild(document.createElement("br"));
+      }
+    });
+  </script>
+</html>
