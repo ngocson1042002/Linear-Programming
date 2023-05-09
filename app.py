@@ -26,13 +26,13 @@ def result():
     print('yoyoCCCC')
     print(num_constraints)
     print(c)
-    # signs la dau: >=, <=
+    # # signs la dau: >=, <=
     A, signs, b = [], [], []
     lines = []
     for i in range(1, num_constraints + 1):
        # print('input2_' + str(i))
         try:
-            lines.append(request.form['input2_' + str(i - 1)])
+            lines.append(request.form[f'input2_{i-1}'])
         except Exception as e :
             print(e)
             
@@ -68,16 +68,17 @@ def result():
     if problem.status == 2: # No solution
         output_data += str('Status: No solution\n')
     elif problem.status == 0: # Unboundedness
-        output_data += str('Status: The problem is unboundedness')
-        output_data += str(f'Optimal value: {optimal_value}')
+        output_data += 'Status: The problem is unboundedness'
+        output_data += f'Optimal value: {optimal_value}'
     else: # ??????
-        output_data += str('Status: The solution was found')
-        output_data += str(f'Optimal value: {optimal_value}')
+        output_data += 'Status: The solution was found'
+        output_data += f'Optimal value: {optimal_value}'
         res = 'Solution: ('
         for i in range(num_variables-1):
             res += f'{solution[i]}, '
         output_data += str(res + f'{solution[num_variables-1]})')
-    print('Hello')
-    return render_template('result.html', output_data = "type(output_data)")
+    print('Output here:')
+    print(output_data)
+    return render_template('result.html', output_data = output_data)
     
 #    return "hello"

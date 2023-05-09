@@ -5,8 +5,9 @@ import os
 MAX_INT = 9999999
 
 def check_same_chars(a, b):
-    a = a.split()
-    b = b.split()
+    a = a.split(" ")
+    b = b.split(" ")
+    
     if len(a) != len(b):
         return False
     for char in a:
