@@ -33,7 +33,7 @@ problem.identify_equality_constraints()
 try:
     optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=True)
 except Exception as err:
-    # os.system('cls')
+    os.system('cls')
     print(err)
     print('\n' + '*'*35 + f'Bland' + '*'*35 + '\n')
     optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
