@@ -5,13 +5,14 @@ import os
 MAX_INT = 9999999
 
 def check_same_chars(a, b):
-    a = a.split(" ")
-    b = b.split(" ")
+    a = a.split()
+    b = b.split()
     if len(a) != len(b):
         return False
     for char in a:
         if char not in b:
             return False
+
     return True
 
 class LinearProgramming:
@@ -434,10 +435,10 @@ class LinearProgramming:
             equations = normalize_problem.generate_equations(basic_solution, tableau)
             normalize_problem.current_dictionary = normalize_problem.update_cur_dictionary(equations)
             isSameDict = check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True
-            
+
             if isSameDict:
                 count_duplicate += 1
-            if isSameDict and count_duplicate == 2:
+            if isSameDict and count_duplicate == 1:
                 raise Exception('Warning: The simplex method with Dantzig occurs cycling!')
             
         if self.objective_type.strip().lower() == 'max':
@@ -503,7 +504,7 @@ if __name__ == "__main__":
     try:
         problem.optimize(type_rotate='Dantzig', print_details=True)
     except Exception as err:
-        os.system('cls')
+        # os.system('cls')
         print(err)
         print('\n' + '*'*35 + f'Bland' + '*'*35 + '\n')
         optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
