@@ -5,8 +5,8 @@ import os
 MAX_INT = 9999999
 
 def check_same_chars(a, b):
-    a = a.split(" ")
-    b = b.split(" ")
+    a = a.split()
+    b = b.split()
     
     if len(a) != len(b):
         return False
@@ -35,6 +35,7 @@ class LinearProgramming:
         self.first_dictionary = None  
         self.current_dictionary = None
         self.arti_variables = None 
+        self.outputString = ''
         
     @property
     def name_variables(self):
@@ -60,6 +61,12 @@ class LinearProgramming:
     def update_cur_dictionary(self, cur_dict):
         self.cur_dictionary = cur_dict
         return cur_dict
+    
+    def addOutputString(self, text):
+        self.outputString += text
+
+    def returnOutputString(self):
+        return self.outputString
         
     def __str__(self):
 
@@ -123,6 +130,7 @@ class LinearProgramming:
         
         equations = self.generate_equations(basic_solution, tableau)
         print(equations)
+        self.addOutputString('\n' + f'{z}' + '\n' + '-' * (self.num_variables * 14) + '\n' + str(equations) + '\n')
     
     def normalize(self):
         c_new = np.copy(self.c)
@@ -250,6 +258,7 @@ class LinearProgramming:
             if print_details:
                 print('*'*30 + f'Auxiliary Problem' + '*'*30)
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
+                aux_problem.addOutputString('\n' + '*'*30 + f'Auxiliary Problem' + '*'*30 + '\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
                 aux_problem.print_dictionary(aux_b, aux_A, aux_c, optimal_value)
                 count += 1
             
@@ -273,6 +282,7 @@ class LinearProgramming:
 
             if print_details:
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
+                aux_problem.addOutputString('\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
                 aux_problem.print_dictionary(b_temp, tableau_temp, z_coef_temp, optimal_value)
                 count += 1
 
@@ -280,6 +290,7 @@ class LinearProgramming:
                 tableau_temp, b_temp, z_coef_temp, optimal_value = aux_problem.update_tableau(tableau_temp, b_temp, z_coef_temp, optimal_value, type_rotate='Dantzig', print_details=print_details)    
                 if print_details:
                     print('*'*30 + f'Dictionary {count}' + '*'*30)
+                    aux_problem.addOutputString('\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
                     aux_problem.print_dictionary(b_temp, tableau_temp, z_coef_temp, optimal_value)
                     count += 1
             
@@ -410,6 +421,7 @@ class LinearProgramming:
 
         if print_details:
             print('*'*30 + f'Dictionary {count}' + '*'*30)
+            normalize_problem.addOutputString('\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
             normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
             count += 1
 
@@ -430,6 +442,7 @@ class LinearProgramming:
             
             if print_details:
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
+                normalize_problem.addOutputString('\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
                 normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
                 count += 1
 

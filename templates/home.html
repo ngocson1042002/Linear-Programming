@@ -1,61 +1,150 @@
-<!-- home.html -->
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Enter coefficients to solve the problem (coefficients are separated by spaces)</title>
+    <title>Linear Programming Solver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .input-container {
+          display: flex;
+          align-items: center;
+        }
+    
+        .input-container input,
+        .input-container select {
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Linear Programming Solver</h1>
     <form action="/result" method="post">
-        <label for="input">Input the numbers of variables:</label>
-        <input type="text" id="input" name="input"><br><br>
+        <label for="numVariables">Number of Variables:</label>
+        <input type="text" id="numVariables" name="numVariables" placeholder="Enter the number of variables">
 
-        <label for="input1">Input the numbers of constraints:</label>
-        <input type="text" id="input1" name="input1">
+        <label for="numConstraints">Number of Constraints:</label>
+        <input type="text" id="numConstraints" name="numConstraints" placeholder="Enter the number of constraints">
 
-        <button type="button" id="create-constraint">Render</button><br><br>
+        <button type="button" class="btn" id="createConstraints">Add Constraints</button>
 
-        <label for="input2">Input the objective type (min or max):</label>
-        <input type="text" id="input2" name="input2"><br><br>
+        <label for="objectiveType" style="margin: 5px 0;">Objective Type:</label>
+        <select id="objectiveType" name="objectiveType">
+            <option value="min">Minimize</option>
+            <option value="max">Maximize</option>
+        </select>
 
-        <label for="input3">Input the objective function coefficient:</label>
-        <input type="text" id="input3" name="input3"><br><br>
+        <label for="objectiveCoeff">Objective Function Coefficients:</label>
+        <input type="text" id="objectiveCoeff" name="objectiveCoeff" placeholder="Enter the coefficients">
 
-        <h3>Constraint:</h3>
-        <div id="input2-fields"></div>
+        <h3>Constraints:</h3>
+        <div id="constraintsContainer"></div>
 
-        <label for="input4">Input the restricted:</label>
-        <input type="text" id="input4" name="input4"><br><br>
+        <label for="restrictions">Restrictions:</label>
+        <input type="text" id="restrictions" name="restrictions" placeholder="Enter the restrictions">
 
-        <input type="submit" value="Submit">
+        <button type="submit" class="btn">Solve</button>
     </form>
-</body>
-<script>
-    document.getElementById("create-constraint").addEventListener("click", function() {
-        var input2Value = parseInt(document.getElementById("input1").value);
-        var input2Fields = document.getElementById("input2-fields");
-        console.log(input2Value);
-  
-      // Clear previous fields
-      input2Fields.innerHTML = "";
-  
-      // Add new fields
-      for (var i = 0; i < input2Value; i++) {
-        var label = document.createElement("label");
-        label.setAttribute("for", "input2_" + i);
-        label.innerHTML = "Constraint " + (i + 1) + ": ";
-        input2Fields.appendChild(label);
-        
-        var input2Field = document.createElement("input");
-        input2Field.setAttribute("type", "text");
-        input2Field.setAttribute("name", "input2_" + i);
-        input2Field.setAttribute("id", "input2_" + i);
-        
-        input2Fields.appendChild(input2Field);
+</div>
 
-        input2Fields.appendChild(document.createElement("br"));
-        input2Fields.appendChild(document.createElement("br"));
-      }
+<script>
+    document.getElementById("createConstraints").addEventListener("click", function() {
+        var numConstraints = parseInt(document.getElementById("numConstraints").value);
+        var constraintsContainer = document.getElementById("constraintsContainer");
+
+        // Clear previous constraints
+        constraintsContainer.innerHTML = "";
+
+        // Add new constraints
+        for (var i = 0; i < numConstraints; i++) {
+            var constraintGroup = document.createElement("div");
+            constraintGroup.className = "constraint-group";
+
+            var constraintLabel = document.createElement("label");
+            constraintLabel.setAttribute("for", "constraint" + i);
+            constraintLabel.innerHTML = "Constraint " + (i + 1) + ": ";
+            constraintGroup.appendChild(constraintLabel);
+
+            var inputContainer = document.createElement("div");
+            inputContainer.className = "input-container";
+
+            var input = document.createElement("input");
+            input.setAttribute("type", "text");
+            input.setAttribute("name", "constraint" + i);
+            input.setAttribute("id", "constraint" + i);
+            inputContainer.appendChild(input);
+
+            var operatorSelect = document.createElement("select");
+            operatorSelect.setAttribute("name", "operator" + i);
+            inputContainer.appendChild(operatorSelect);
+
+            var operators = ["≤", "≥", "="];
+            for (var j = 0; j < operators.length; j++) {
+                var option = document.createElement("option");
+                option.value = operators[j];
+                option.text = operators[j];
+                operatorSelect.appendChild(option);
+            }
+
+            var constraintValueInput = document.createElement("input");
+            constraintValueInput.setAttribute("type", "text");
+            constraintValueInput.setAttribute("name", "constraintValue" + i);
+            constraintValueInput.setAttribute("id", "constraintValue" + i);
+            inputContainer.appendChild(constraintValueInput);
+
+            constraintGroup.appendChild(inputContainer);
+            constraintsContainer.appendChild(constraintGroup);
+        }
     });
-  </script>
+</script>
+</body>
 </html>
