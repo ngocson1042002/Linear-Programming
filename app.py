@@ -58,6 +58,8 @@ def result():
         output_data += str('\n' + '*'*35 + f'Bland' + '*'*35 + '\n')
         optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
         output_data += problem.returnOutputString()
+        
+    print(problem.dict_steps)
 
     if problem.status == 2: # No solution
         output_data += str('Status: No solution\n')

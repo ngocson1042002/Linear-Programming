@@ -34,7 +34,8 @@ class LinearProgramming:
         self.priority_index = dict()
         self.first_dictionary = None  
         self.current_dictionary = None
-        self.arti_variables = None 
+        self.arti_variables = None
+        self.dict_steps = {'A': [], 'b': [], 'c': [], 'optimal': [], 'basics': [], 'non_basics': []}
         self.outputString = ''
         
     @property
@@ -418,11 +419,16 @@ class LinearProgramming:
         equations = normalize_problem.generate_equations(basic_solution, tableau)
         normalize_problem.first_dictionary = normalize_problem.update_first_dictionary(equations)
 
-
         if print_details:
             print('*'*30 + f'Dictionary {count}' + '*'*30)
             normalize_problem.addOutputString('\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
             normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
+            self.dict_steps['A'].append(tableau)
+            self.dict_steps['b'].append(basic_solution)
+            self.dict_steps['c'].append(z_coef)
+            self.dict_steps['optimal'].append(optimal_value)
+            self.dict_steps['basics'].append(normalize_problem.basics)
+            self.dict_steps['non_basics'].append(normalize_problem.non_basics)
             count += 1
 
 
@@ -444,6 +450,12 @@ class LinearProgramming:
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
                 normalize_problem.addOutputString('\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
                 normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
+                self.dict_steps['A'].append(tableau)
+                self.dict_steps['b'].append(basic_solution)
+                self.dict_steps['c'].append(z_coef)
+                self.dict_steps['optimal'].append(optimal_value)
+                self.dict_steps['basics'].append(normalize_problem.basics)
+                self.dict_steps['non_basics'].append(normalize_problem.non_basics)
                 count += 1
 
             equations = normalize_problem.generate_equations(basic_solution, tableau)
@@ -453,6 +465,7 @@ class LinearProgramming:
             if isSameDict:
                 count_duplicate += 1
             if isSameDict and count_duplicate == 1:
+                self.dict_steps = {'A': [], 'b': [], 'c': [], 'optimal': [], 'basics': [], 'non_basics': []}
                 raise Exception('Warning: The simplex method with Dantzig occurs cycling!')
             
         if self.objective_type.strip().lower() == 'max':
