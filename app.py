@@ -51,15 +51,35 @@ def result():
     output_data = ''
     try:
         optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=True)
-        output_data += problem.returnOutputString()
     except Exception as err:
         # os.system('cls')
         output_data += str(err) + '\n'
-        output_data += str('\n' + '*'*35 + f'Bland' + '*'*35 + '\n')
+        output_data += str('\n' + '*'*33 + f'Bland' + '*'*33 + '\n')
         optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
-        output_data += problem.returnOutputString()
         
-    print(problem.dict_steps)
+    result = '\n'
+    for i in range(len(problem.dict_steps['optimal'])) :
+        result += '\n' + '*'*30 + f'Dictionary {i + 1}' + '*'*30 + '\n\n'
+        result += f"z = {problem.dict_steps['optimal'][i]}"
+        for j in range(len(problem.dict_steps['c'][i])):
+            if (problem.dict_steps['c'][i][j] >= 0):
+                result += f" + {abs(problem.dict_steps['c'][i][j])}{problem.dict_steps['non_basics'][i][j]}"
+            else:
+                result += f" - {abs(problem.dict_steps['c'][i][j])}{problem.dict_steps['non_basics'][i][j]}"
+                
+            
+        result += '\n' + '_'*problem.num_variables*12
+        
+        for j in range(len(problem.dict_steps['A'][i])):
+            result += f"\n{problem.dict_steps['basics'][i][j]} = {problem.dict_steps['b'][i][j]}"
+            for k in range(len(problem.dict_steps['A'][i][j])):
+                if (-problem.dict_steps['A'][i][j][k] >= 0):
+                    result += f" + {abs(problem.dict_steps['A'][i][j][k])}{problem.dict_steps['non_basics'][j][k]}"
+                else:
+                    result += f" - {abs(problem.dict_steps['A'][i][j][k])}{problem.dict_steps['non_basics'][j][k]}"
+        result += '\n\n'
+    
+    output_data += result
 
     if problem.status == 2: # No solution
         output_data += str('Status: No solution\n')
@@ -73,8 +93,5 @@ def result():
         for i in range(num_variables-1):
             res += f'{solution[i]}, '
         output_data += str(res + f'{solution[num_variables-1]})\n')
-    print('Output here:', problem.returnOutputString())
-    # print(output_data)
+   
     return render_template('result.html', output_data = output_data)
-    
-#    return "hello"

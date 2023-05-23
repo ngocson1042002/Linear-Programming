@@ -36,7 +36,6 @@ class LinearProgramming:
         self.current_dictionary = None
         self.arti_variables = None
         self.dict_steps = {'A': [], 'b': [], 'c': [], 'optimal': [], 'basics': [], 'non_basics': []}
-        self.outputString = ''
         
     @property
     def name_variables(self):
@@ -63,12 +62,6 @@ class LinearProgramming:
         self.cur_dictionary = cur_dict
         return cur_dict
     
-    def addOutputString(self, text):
-        self.outputString += text
-
-    def returnOutputString(self):
-        return self.outputString
-        
     def __str__(self):
 
         res = f'{self.objective_type.title()}\t\t{self.c[0]}{self.name_variables[0]}'
@@ -131,7 +124,6 @@ class LinearProgramming:
         
         equations = self.generate_equations(basic_solution, tableau)
         print(equations)
-        self.addOutputString('\n' + f'{z}' + '\n' + '-' * (self.num_variables * 14) + '\n' + str(equations) + '\n')
     
     def normalize(self):
         c_new = np.copy(self.c)
@@ -259,7 +251,6 @@ class LinearProgramming:
             if print_details:
                 print('*'*30 + f'Auxiliary Problem' + '*'*30)
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
-                aux_problem.addOutputString('\n' + '*'*30 + f'Auxiliary Problem' + '*'*30 + '\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
                 aux_problem.print_dictionary(aux_b, aux_A, aux_c, optimal_value)
                 count += 1
             
@@ -283,7 +274,6 @@ class LinearProgramming:
 
             if print_details:
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
-                aux_problem.addOutputString('\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
                 aux_problem.print_dictionary(b_temp, tableau_temp, z_coef_temp, optimal_value)
                 count += 1
 
@@ -291,7 +281,6 @@ class LinearProgramming:
                 tableau_temp, b_temp, z_coef_temp, optimal_value = aux_problem.update_tableau(tableau_temp, b_temp, z_coef_temp, optimal_value, type_rotate='Dantzig', print_details=print_details)    
                 if print_details:
                     print('*'*30 + f'Dictionary {count}' + '*'*30)
-                    aux_problem.addOutputString('\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
                     aux_problem.print_dictionary(b_temp, tableau_temp, z_coef_temp, optimal_value)
                     count += 1
             
@@ -421,15 +410,15 @@ class LinearProgramming:
 
         if print_details:
             print('*'*30 + f'Dictionary {count}' + '*'*30)
-            normalize_problem.addOutputString('\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
             normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
-            self.dict_steps['A'].append(tableau)
-            self.dict_steps['b'].append(basic_solution)
-            self.dict_steps['c'].append(z_coef)
-            self.dict_steps['optimal'].append(optimal_value)
-            self.dict_steps['basics'].append(normalize_problem.basics)
-            self.dict_steps['non_basics'].append(normalize_problem.non_basics)
             count += 1
+        
+        self.dict_steps['A'].append(np.copy(tableau))
+        self.dict_steps['b'].append(np.copy(basic_solution))
+        self.dict_steps['c'].append(np.copy(z_coef))
+        self.dict_steps['optimal'].append(np.copy(optimal_value))
+        self.dict_steps['basics'].append(np.copy(normalize_problem.basics))
+        self.dict_steps['non_basics'].append(np.copy(normalize_problem.non_basics))
 
 
         while np.any(z_coef < 0):
@@ -448,15 +437,15 @@ class LinearProgramming:
             
             if print_details:
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
-                normalize_problem.addOutputString('\n' + '*'*30 + f'Dictionary {count}' + '*'*30 + '\n')
                 normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
-                self.dict_steps['A'].append(tableau)
-                self.dict_steps['b'].append(basic_solution)
-                self.dict_steps['c'].append(z_coef)
-                self.dict_steps['optimal'].append(optimal_value)
-                self.dict_steps['basics'].append(normalize_problem.basics)
-                self.dict_steps['non_basics'].append(normalize_problem.non_basics)
                 count += 1
+            
+            self.dict_steps['A'].append(np.copy(tableau))
+            self.dict_steps['b'].append(np.copy(basic_solution))
+            self.dict_steps['c'].append(np.copy(z_coef))
+            self.dict_steps['optimal'].append(np.copy(optimal_value))
+            self.dict_steps['basics'].append(np.copy(normalize_problem.basics))
+            self.dict_steps['non_basics'].append(np.copy(normalize_problem.non_basics))
 
             equations = normalize_problem.generate_equations(basic_solution, tableau)
             normalize_problem.current_dictionary = normalize_problem.update_cur_dictionary(equations)
