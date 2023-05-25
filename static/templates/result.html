@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="Linear math solver">
+    <link rel="icon" href="{{url_for('static', filename='images/logo.png')}}" type="image/x-icon" />
+    <title>Linear Programming Solver | Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url({{url_for('static', filename='images/gau.jpg')}});
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff7f8;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: #fff; /* Màu nền hồng nhạt */
+        }
+    
+        h1 {
+            text-align: center;
+            color: #BE2626; /* Màu chữ */
+        }
+    
+        .result-container {
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            text-align: center;
+            border: 2px solid #721616;
+        }
+
+        #backButton {
+            background-color: #000; /* Màu nút hồng */
+            color: #fff;
+            padding: 13px 28px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        #backButton:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <button id="backButton">Back</button>
+    <div class="container">
+        <h1>Optimization Result:</h1>
+        <div class="result-container">{{ output_data|safe }}</div>
+    </div>
+    <script>
+        document.getElementById("backButton").addEventListener("click", function() {
+            // Sử dụng window.history để trở về trang trước đó
+            window.history.back();
+        });
+    </script>
+</body>
+</html>

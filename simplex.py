@@ -455,7 +455,7 @@ class LinearProgramming:
                 count_duplicate += 1
             if isSameDict and count_duplicate == 1:
                 self.dict_steps = {'A': [], 'b': [], 'c': [], 'optimal': [], 'basics': [], 'non_basics': []}
-                raise Exception('Warning: The simplex method with Dantzig occurs cycling!')
+                raise Exception('<b style="color: red; font-size: 17px;">Warning: </b><b style="font-size: 16px;">The simplex method with Dantzig occurs cycling!</b>')
             
         if self.objective_type.strip().lower() == 'max':
             optimal_value *= -1

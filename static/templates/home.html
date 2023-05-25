@@ -1,24 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="Linear math solver">
+    <link rel="icon" href="{{url_for('static', filename='images/logo.png')}}" type="image/x-icon" />
     <title>Linear Programming Solver</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
+            background-image: url({{url_for('static', filename='images/gau.jpg')}});
         }
 
         .container {
             max-width: 600px;
             margin: 0 auto;
+            margin-top: 30px;
             padding: 20px;
-            background-color: #fff;
+            background-color: #fff; /* Màu nền */
             border-radius: 5px;
+            border: 2px solid #004080;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
             text-align: center;
+            color: #721616; /* Màu chữ */
         }
 
         form {
@@ -29,6 +37,7 @@
             display: block;
             font-weight: bold;
             margin-bottom: 5px;
+            color: #721616; /* Màu chữ */
         }
 
         input[type="text"],
@@ -42,7 +51,7 @@
         }
 
         .btn {
-            background-color: #4CAF50;
+            background-color: #721616; /* Màu nút */
             color: #fff;
             padding: 10px 15px;
             border: none;
@@ -51,7 +60,7 @@
         }
 
         .btn:hover {
-            background-color: #45a049;
+            background-color: #721616; /* Màu nút */
         }
 
         .input-container {
@@ -63,6 +72,21 @@
         .input-container select {
             margin-right: 10px;
         }
+
+        .input-field {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .variable-label {
+            margin-right: 5px;
+        }
+        
+        .restriction-select {
+            width: 80px;
+        }          
+
     </style>
 </head>
 <body>
@@ -70,12 +94,12 @@
     <h1>Linear Programming Solver</h1>
     <form action="/result" method="post">
         <label for="numVariables">Number of Variables:</label>
-        <input type="text" id="numVariables" name="numVariables" placeholder="Enter the number of variables">
+        <input type="text" id="numVariables" name="numVariables" placeholder="Enter the number of variables" required>
 
         <label for="numConstraints">Number of Constraints:</label>
-        <input type="text" id="numConstraints" name="numConstraints" placeholder="Enter the number of constraints">
+        <input type="text" id="numConstraints" name="numConstraints" placeholder="Enter the number of constraints" required>
 
-        <button type="button" class="btn" id="createConstraints">Add Constraints</button>
+        <button type="button" class="btn" id="createConstraints">Generate</button>
 
         <label for="objectiveType" style="margin: 5px 0;">Objective Type:</label>
         <select id="objectiveType" name="objectiveType">
@@ -84,13 +108,11 @@
         </select>
 
         <label for="objectiveCoeff">Objective Function Coefficients:</label>
-        <input type="text" id="objectiveCoeff" name="objectiveCoeff" placeholder="Enter the coefficients">
+        <input type="text" id="objectiveCoeff" name="objectiveCoeff" placeholder="Enter the coefficients" required>
 
-        <h3>Constraints:</h3>
         <div id="constraintsContainer"></div>
 
-        <label for="restrictions">Restrictions:</label>
-        <input type="text" id="restrictions" name="restrictions" placeholder="Enter the restrictions">
+        <div id="restrictionsContainer"></div>
 
         <button type="submit" class="btn">Solve</button>
     </form>
@@ -98,13 +120,20 @@
 
 <script>
     document.getElementById("createConstraints").addEventListener("click", function() {
+        var numVariables = parseInt(document.getElementById("numVariables").value);
         var numConstraints = parseInt(document.getElementById("numConstraints").value);
         var constraintsContainer = document.getElementById("constraintsContainer");
+        var restrictionsContainer = document.getElementById("restrictionsContainer");
 
         // Clear previous constraints
         constraintsContainer.innerHTML = "";
+        restrictionsContainer.innerHTML = "";
 
         // Add new constraints
+        var constraintTitle = document.createElement("h3");
+        constraintTitle.textContent = "Constraints: ";
+        constraintsContainer.appendChild(constraintTitle);
+
         for (var i = 0; i < numConstraints; i++) {
             var constraintGroup = document.createElement("div");
             constraintGroup.className = "constraint-group";
@@ -121,6 +150,7 @@
             input.setAttribute("type", "text");
             input.setAttribute("name", "constraint" + i);
             input.setAttribute("id", "constraint" + i);
+            input.setAttribute("required", "required")
             inputContainer.appendChild(input);
 
             var operatorSelect = document.createElement("select");
@@ -128,9 +158,11 @@
             inputContainer.appendChild(operatorSelect);
 
             var operators = ["≤", "≥", "="];
+            var valueOperators = ["<=", ">=", "="]
+            
             for (var j = 0; j < operators.length; j++) {
                 var option = document.createElement("option");
-                option.value = operators[j];
+                option.value = valueOperators[j];
                 option.text = operators[j];
                 operatorSelect.appendChild(option);
             }
@@ -139,11 +171,53 @@
             constraintValueInput.setAttribute("type", "text");
             constraintValueInput.setAttribute("name", "constraintValue" + i);
             constraintValueInput.setAttribute("id", "constraintValue" + i);
+            input.setAttribute("required", "required")
             inputContainer.appendChild(constraintValueInput);
 
             constraintGroup.appendChild(inputContainer);
             constraintsContainer.appendChild(constraintGroup);
         }
+
+         // Add new restrictions
+         var restrictionTitle = document.createElement("h3");
+         restrictionTitle.textContent = "Restrictions: ";
+         restrictionsContainer.appendChild(restrictionTitle);
+
+         for (var i = 0; i < numVariables; i++) {
+            // Tạo thẻ <div> để chứa tên biến và ô chọn giá trị
+            var fieldContainer = document.createElement("div");
+            fieldContainer.classList.add("input-field");
+          
+            // Tạo thẻ <label> cho tên biến
+            var label = document.createElement("label");
+            label.innerHTML = "x" + "<sub>" + (i + 1) + "</sub>" + " ";
+            label.classList.add("variable-label");
+          
+            // Tạo thẻ <select> cho ô chọn giá trị
+            var select = document.createElement("select");
+            select.setAttribute("id", "restriction" + i);
+            select.setAttribute("name", "restriction" + i);
+            select.classList.add("restriction-select");
+          
+            // Tạo các tùy chọn (options) và thêm vào thẻ <select>
+                var options = ["≥ 0", "≤ 0", "None"];
+                var values = ["1", "0", "None"];
+                
+                for (var j = 0; j < options.length; j++) {
+                  var option = document.createElement("option");
+                  option.value = values[j];
+                  option.text = options[j];
+                  select.appendChild(option);
+                }                
+          
+            // Thêm các phần tử vào fieldContainer
+            fieldContainer.appendChild(label);
+            fieldContainer.appendChild(select);
+          
+            // Thêm fieldContainer vào restrictionsContainer
+            restrictionsContainer.appendChild(fieldContainer);
+        }          
+
     });
 </script>
 </body>

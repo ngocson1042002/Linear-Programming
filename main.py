@@ -38,8 +38,6 @@ except Exception as err:
     print('\n' + '*'*35 + f'Bland' + '*'*35 + '\n')
     optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
 
-print(problem.dict_steps)
-
 if problem.status == 2: # No solution
     print('Status: No solution')
 elif problem.status == 0: # Unboundedness

@@ -7,6 +7,10 @@ from simplex import LinearProgramming
 
 app = Flask(__name__)
 
+# Cấu hình đường dẫn đến thư mục templates
+app.template_folder = 'static/templates'
+app.add_url_rule('/photos/<path:filename>', ...)
+
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -32,13 +36,18 @@ def result():
             b.append(request.form[f'constraintValue{i}'])
         except Exception as e :
             print(e)
-            
+    
+    
     for i in range(num_constraints):
         elements = lines[i].split()
         A.append([float(elements[j]) for j in range(num_variables)])
 
     # Rang buoc dau: 1 la x >= 0, 0 la x <= 0, None la x tuy y
-    restricted = tuple([None if r.strip().lower() == 'none' else int(r)  for r in request.form['restrictions'].split()])
+    temp = []
+    for i in range(num_variables):
+        temp.append(request.form[f'restriction{i}'])
+    
+    restricted = tuple([None if r.strip().lower() == 'none' else int(r)  for r in temp])
 
     c_frac = np.array([Fraction(i) for i in c])
     b_frac = np.array([Fraction(i) for i in b])
@@ -53,45 +62,88 @@ def result():
         optimal_value, solution = problem.optimize(type_rotate='Dantzig', print_details=True)
     except Exception as err:
         # os.system('cls')
-        output_data += str(err) + '\n'
-        output_data += str('\n' + '*'*33 + f'Bland' + '*'*33 + '\n')
+        output_data += str(err) + '<br>'
+        output_data += str('<br>' + '*'*33 + f'Bland' + '*'*33 + '<br>')
         optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
-        
-    result = '\n'
-    for i in range(len(problem.dict_steps['optimal'])) :
-        result += '\n' + '*'*30 + f'Dictionary {i + 1}' + '*'*30 + '\n\n'
-        result += f"z = {problem.dict_steps['optimal'][i]}"
-        for j in range(len(problem.dict_steps['c'][i])):
-            if (problem.dict_steps['c'][i][j] >= 0):
-                result += f" + {abs(problem.dict_steps['c'][i][j])}{problem.dict_steps['non_basics'][i][j]}"
-            else:
-                result += f" - {abs(problem.dict_steps['c'][i][j])}{problem.dict_steps['non_basics'][i][j]}"
+    
+    
+    # Xử lí output để hiển thị trong html
+    basics = []
+    # Lặp qua từng phần tử trong mảng a
+    if(len(problem.dict_steps['basics']) != 0):
+        for sublist in problem.dict_steps['basics']:
+            temp = []
+            for item in sublist:
+                # Tách ký tự đầu tiên và hệ số sau ký tự "_"
+                character = item[0]
+                coefficient = item[2:]
                 
+                # Sử dụng phương thức format để tạo chuỗi a<sub>i</sub>
+                formatted_string = "{}<sub>{}</sub>".format(character, coefficient)
+                
+                # Thêm chuỗi đã được định dạng vào mảng tạm thời
+                temp.append(formatted_string)
             
-        result += '\n' + '_'*problem.num_variables*12
-        
-        for j in range(len(problem.dict_steps['A'][i])):
-            result += f"\n{problem.dict_steps['basics'][i][j]} = {problem.dict_steps['b'][i][j]}"
-            for k in range(len(problem.dict_steps['A'][i][j])):
-                if (-problem.dict_steps['A'][i][j][k] >= 0):
-                    result += f" + {abs(problem.dict_steps['A'][i][j][k])}{problem.dict_steps['non_basics'][j][k]}"
+            # Thêm mảng tạm vào mảng b
+            basics.append(temp)
+    
+    nonBasics = []
+
+    # Lặp qua từng phần tử trong mảng a
+    if(len(problem.dict_steps['non_basics']) != 0):
+        for sublist in problem.dict_steps['non_basics']:
+            temp = []
+            for item in sublist:
+                # Tách ký tự đầu tiên và hệ số sau ký tự "_"
+                character = item[0]
+                coefficient = item[2:]
+                
+                # Sử dụng phương thức format để tạo chuỗi a<sub>i</sub>
+                formatted_string = "{}<sub>{}</sub>".format(character, coefficient)
+                
+                # Thêm chuỗi đã được định dạng vào mảng tạm thời
+                temp.append(formatted_string)
+            
+            # Thêm mảng tạm vào mảng b
+            nonBasics.append(temp)
+            
+    result = ''
+    if(len(problem.dict_steps['optimal']) != 0):
+        for i in range(len(problem.dict_steps['optimal'])) :
+            result += '<br>' + '*'*30 + f'Dictionary {i + 1}' + '*'*30 + '<br><br>'
+            result += f"z = {problem.dict_steps['optimal'][i]}"
+            for j in range(len(problem.dict_steps['c'][i])):
+                if (problem.dict_steps['c'][i][j] >= 0):
+                    result += f" + {abs(problem.dict_steps['c'][i][j])}{nonBasics[i][j]}"
                 else:
-                    result += f" - {abs(problem.dict_steps['A'][i][j][k])}{problem.dict_steps['non_basics'][j][k]}"
-        result += '\n\n'
+                    result += f" - {abs(problem.dict_steps['c'][i][j])}{nonBasics[i][j]}"
+                    
+                
+            result += '<br>' + '_'*problem.num_variables*8
+            
+            for j in range(len(problem.dict_steps['A'][i])):
+                result += f"<br>{basics[i][j]} = {problem.dict_steps['b'][i][j]}"
+                for k in range(len(problem.dict_steps['A'][i][j])):
+                    if nonBasics and j < len(nonBasics) and k < len(nonBasics[j]):
+                        if (-problem.dict_steps['A'][i][j][k] >= 0):
+                            result += f" + {abs(problem.dict_steps['A'][i][j][k])}{nonBasics[j][k]}"
+                        else:
+                            result += f" - {abs(problem.dict_steps['A'][i][j][k])}{nonBasics[j][k]}"
+            result += '<br>'
     
     output_data += result
 
+
     if problem.status == 2: # No solution
-        output_data += str('Status: No solution\n')
+        output_data += str('<br><b>Status: </b>No solution<br>')
     elif problem.status == 0: # Unboundedness
-        output_data += 'Status: The problem is unboundedness\n'
-        output_data += f'Optimal value: {optimal_value}\n'
+        output_data += '<br><b>Status: </b>The problem is unboundedness<br>'
+        output_data += f'<b>Optimal value: </b>{optimal_value}<br>'
     else: # ??????
-        output_data += 'Status: The solution was found\n'
-        output_data += f'Optimal value: {optimal_value}\n'
-        res = 'Solution: ('
+        output_data += '<br><b>Status: </b>The solution was found<br>'
+        output_data += f'<b>Optimal value: </b>{optimal_value}<br>'
+        res = '<b>Solution: </b>('
         for i in range(num_variables-1):
             res += f'{solution[i]}, '
-        output_data += str(res + f'{solution[num_variables-1]})\n')
-   
+        output_data += str(res + f'{solution[num_variables-1]})<br><br>')
     return render_template('result.html', output_data = output_data)
