@@ -254,6 +254,13 @@ class LinearProgramming:
                 aux_problem.print_dictionary(aux_b, aux_A, aux_c, optimal_value)
                 count += 1
             
+            self.dict_steps['A'].append(np.copy(aux_A))
+            self.dict_steps['b'].append(np.copy(aux_b))
+            self.dict_steps['c'].append(np.copy(aux_c))
+            self.dict_steps['optimal'].append(np.copy(optimal_value))
+            self.dict_steps['basics'].append(np.copy(aux_basics))
+            self.dict_steps['non_basics'].append(np.copy(aux_non_basics))
+            
             tableau_temp, b_temp, z_coef_temp = aux_problem.A.copy(), aux_problem.b.copy(), aux_problem.c.copy()
             
             min_index = np.argmin(b_temp)
@@ -276,13 +283,27 @@ class LinearProgramming:
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
                 aux_problem.print_dictionary(b_temp, tableau_temp, z_coef_temp, optimal_value)
                 count += 1
-
+                
+            self.dict_steps['A'].append(np.copy(tableau_temp))
+            self.dict_steps['b'].append(np.copy(b_temp))
+            self.dict_steps['c'].append(np.copy(z_coef_temp))
+            self.dict_steps['optimal'].append(np.copy(optimal_value))
+            self.dict_steps['basics'].append(np.copy(aux_problem.basics))
+            self.dict_steps['non_basics'].append(np.copy(aux_problem.non_basics))
+            
             while np.any(z_coef_temp < 0):
                 tableau_temp, b_temp, z_coef_temp, optimal_value = aux_problem.update_tableau(tableau_temp, b_temp, z_coef_temp, optimal_value, type_rotate='Dantzig', print_details=print_details)    
                 if print_details:
                     print('*'*30 + f'Dictionary {count}' + '*'*30)
                     aux_problem.print_dictionary(b_temp, tableau_temp, z_coef_temp, optimal_value)
                     count += 1
+                
+                self.dict_steps['A'].append(np.copy(tableau_temp))
+                self.dict_steps['b'].append(np.copy(b_temp))
+                self.dict_steps['c'].append(np.copy(z_coef_temp))
+                self.dict_steps['optimal'].append(np.copy(optimal_value))
+                self.dict_steps['basics'].append(np.copy(aux_problem.basics))
+                self.dict_steps['non_basics'].append(np.copy(aux_problem.non_basics))
             
             if not (np.sum(z_coef_temp) == 1 and z_coef_temp[z_coef_temp == 0].size == z_coef_temp.size - 1 and aux_problem.non_basics[np.where(z_coef_temp == 1)[0]] == 'x_0'):
                 infeasibility = True
