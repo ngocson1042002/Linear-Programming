@@ -67,6 +67,10 @@ def result():
         optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
     
     
+    print("AAAAA",problem.dict_steps['A'])
+    print("BBBBBBB",problem.dict_steps['basics'])
+    print("NNNNNNN",problem.dict_steps['non_basics'])
+    
     # Xử lí output để hiển thị trong html
     basics = []
     # Lặp qua từng phần tử trong mảng a
@@ -106,6 +110,8 @@ def result():
             
             # Thêm mảng tạm vào mảng b
             nonBasics.append(temp)
+    
+    print(nonBasics)
             
     result = ''
     if(len(problem.dict_steps['optimal']) != 0):
