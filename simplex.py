@@ -35,7 +35,9 @@ class LinearProgramming:
         self.first_dictionary = None  
         self.current_dictionary = None
         self.arti_variables = None
-        self.dict_steps = {'A': [], 'b': [], 'c': [], 'optimal': [], 'basics': [], 'non_basics': []}
+        self.dict_steps = {'Aux': {'A': [], 'b': [], 'c': [], 'optimal': [], 'basics': [], 'non_basics': [], 'status': []}, 
+                        'Prime': {'A': [], 'b': [], 'c': [], 'optimal': [], 'basics': [], 'non_basics': [], 'status': []},
+                        'var_change': []}
         
     @property
     def name_variables(self):
@@ -208,8 +210,10 @@ class LinearProgramming:
         ratio = basic_solution[ratio_indices]/tableau[:, entering_variable_index][tableau[:, entering_variable_index] > 0]
         leaving_variable_index = ratio_indices[ratio.argmin()]
 
+        status = f'{self.non_basics[entering_variable_index]} entering, {self.basics[leaving_variable_index]} leaving'
         if print_details:
-            print(f'{self.non_basics[entering_variable_index]} entering, {self.basics[leaving_variable_index]} leaving\n')
+            print(status)
+
         self.non_basics[entering_variable_index], self.basics[leaving_variable_index] = self.basics[leaving_variable_index], self.non_basics[entering_variable_index]
         remainder = tableau[leaving_variable_index,entering_variable_index]
         k = objective_coef[entering_variable_index]/remainder
@@ -230,7 +234,7 @@ class LinearProgramming:
         tableau[leaving_variable_index,:] /= remainder
         tableau[leaving_variable_index,:][entering_variable_index] /= remainder
 
-        return tableau, basic_solution, objective_coef, optimal_value
+        return tableau, basic_solution, objective_coef, optimal_value, status
         
     
     def initial_feasible_solution(self, normalize_problem, print_details):
@@ -253,11 +257,19 @@ class LinearProgramming:
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
                 aux_problem.print_dictionary(aux_b, aux_A, aux_c, optimal_value)
                 count += 1
+
+            self.add_dict_steps('Aux', aux_A, aux_b, aux_c, optimal_value, aux_problem.basics, aux_problem.non_basics)
             
             tableau_temp, b_temp, z_coef_temp = aux_problem.A.copy(), aux_problem.b.copy(), aux_problem.c.copy()
             
             min_index = np.argmin(b_temp)
+            status = f'{aux_problem.non_basics[-1]} entering, {aux_problem.basics[min_index]} leaving'
+            if print_details:
+                print(status)
+            self.dict_steps['Aux']['status'].append(status)
+
             aux_problem.non_basics[-1], aux_problem.basics[min_index] = aux_problem.basics[min_index], aux_problem.non_basics[-1]
+
             tableau_temp[min_index,:] *= -1
             b_temp[min_index] *= -1
             z_coef_temp -= tableau_temp[min_index,:]
@@ -276,13 +288,16 @@ class LinearProgramming:
                 print('*'*30 + f'Dictionary {count}' + '*'*30)
                 aux_problem.print_dictionary(b_temp, tableau_temp, z_coef_temp, optimal_value)
                 count += 1
+            self.add_dict_steps('Aux', tableau_temp, b_temp, z_coef_temp, optimal_value, aux_problem.basics, aux_problem.non_basics)
 
             while np.any(z_coef_temp < 0):
-                tableau_temp, b_temp, z_coef_temp, optimal_value = aux_problem.update_tableau(tableau_temp, b_temp, z_coef_temp, optimal_value, type_rotate='Dantzig', print_details=print_details)    
+                tableau_temp, b_temp, z_coef_temp, optimal_value, status = aux_problem.update_tableau(tableau_temp, b_temp, z_coef_temp, optimal_value, type_rotate='Dantzig', print_details=print_details)    
                 if print_details:
                     print('*'*30 + f'Dictionary {count}' + '*'*30)
                     aux_problem.print_dictionary(b_temp, tableau_temp, z_coef_temp, optimal_value)
                     count += 1
+                self.add_dict_steps('Aux', tableau_temp, b_temp, z_coef_temp, optimal_value, aux_problem.basics, aux_problem.non_basics)
+                self.dict_steps['Aux']['status'].append(status)
             
             if not (np.sum(z_coef_temp) == 1 and z_coef_temp[z_coef_temp == 0].size == z_coef_temp.size - 1 and aux_problem.non_basics[np.where(z_coef_temp == 1)[0]] == 'x_0'):
                 infeasibility = True
@@ -374,16 +389,31 @@ class LinearProgramming:
             
         return True
 
+    def add_dict_steps(self, type_problem, tableau, basic_solution, z_coef, optimal_value, basics, non_basics):
+        self.dict_steps[type_problem]['A'].append(np.copy(tableau))
+        self.dict_steps[type_problem]['b'].append(np.copy(basic_solution))
+        self.dict_steps[type_problem]['c'].append(np.copy(z_coef))
+        self.dict_steps[type_problem]['optimal'].append(np.copy(optimal_value))
+        self.dict_steps[type_problem]['basics'].append(np.copy(basics))
+        self.dict_steps[type_problem]['non_basics'].append(np.copy(non_basics))
+
   
     def optimize(self,type_rotate='Dantzig', print_details=False):
         normalize_problem = self.normalize()
 
+        r = ''
+        for key, value in self.var_change.items():
+            if len(value) == 3:
+                t  = f'{key} = {value[0]} - {value[1]}'
+                r += (t+'\n')
+                self.dict_steps['var_change'].append(t)
+            elif value[-1] == 1:
+                t =  f'{value[0]} = -{key}'
+                r += (t+'\n')
+                self.dict_steps['var_change'].append(t)
+
         if print_details:
-            for key, value in self.var_change.items():
-                if len(value) == 3:
-                    print(f'{key} = {value[0]} - {value[1]}')
-                elif value[-1] == 1:
-                    print(f'{value[0]} = -{key}')
+            print(r)
 
         flag = False
         init_optimal=[0]
@@ -413,17 +443,12 @@ class LinearProgramming:
             normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
             count += 1
         
-        self.dict_steps['A'].append(np.copy(tableau))
-        self.dict_steps['b'].append(np.copy(basic_solution))
-        self.dict_steps['c'].append(np.copy(z_coef))
-        self.dict_steps['optimal'].append(np.copy(optimal_value))
-        self.dict_steps['basics'].append(np.copy(normalize_problem.basics))
-        self.dict_steps['non_basics'].append(np.copy(normalize_problem.non_basics))
+        self.add_dict_steps('Prime',tableau, basic_solution, z_coef, optimal_value, normalize_problem.basics, normalize_problem.non_basics)
 
 
         while np.any(z_coef < 0):
             try:
-                tableau, basic_solution, z_coef, optimal_value = normalize_problem.update_tableau(tableau, basic_solution, z_coef, optimal_value, type_rotate, print_details)
+                tableau, basic_solution, z_coef, optimal_value, status = normalize_problem.update_tableau(tableau, basic_solution, z_coef, optimal_value, type_rotate, print_details)
             except:              
                 # Unboundedness
                 self.status = 0
@@ -440,13 +465,8 @@ class LinearProgramming:
                 normalize_problem.print_dictionary(basic_solution, tableau, z_coef, optimal_value)
                 count += 1
             
-            self.dict_steps['A'].append(np.copy(tableau))
-            self.dict_steps['b'].append(np.copy(basic_solution))
-            self.dict_steps['c'].append(np.copy(z_coef))
-            self.dict_steps['optimal'].append(np.copy(optimal_value))
-            self.dict_steps['basics'].append(np.copy(normalize_problem.basics))
-            self.dict_steps['non_basics'].append(np.copy(normalize_problem.non_basics))
-
+            self.add_dict_steps('Prime',tableau, basic_solution, z_coef, optimal_value, normalize_problem.basics, normalize_problem.non_basics)
+            self.dict_steps['Prime']['status'].append(status)
             equations = normalize_problem.generate_equations(basic_solution, tableau)
             normalize_problem.current_dictionary = normalize_problem.update_cur_dictionary(equations)
             isSameDict = check_same_chars(normalize_problem.first_dictionary, normalize_problem.current_dictionary) == True
@@ -454,7 +474,8 @@ class LinearProgramming:
             if isSameDict:
                 count_duplicate += 1
             if isSameDict and count_duplicate == 1:
-                self.dict_steps = {'A': [], 'b': [], 'c': [], 'optimal': [], 'basics': [], 'non_basics': []}
+                self.dict_steps['Aux'] = {'A': [], 'b': [], 'c': [], 'optimal': [], 'basics': [], 'non_basics': [], 'status': []}
+                self.dict_steps['Prime'] = {'A': [], 'b': [], 'c': [], 'optimal': [], 'basics': [], 'non_basics': [], 'status': []}
                 raise Exception('<b style="color: red; font-size: 17px;">Warning: </b><b style="font-size: 16px;">The simplex method with Dantzig occurs cycling!</b>')
             
         if self.objective_type.strip().lower() == 'max':
