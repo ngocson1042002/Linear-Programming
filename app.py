@@ -67,12 +67,15 @@ def printDictionary(problem, problem_type):
             for j in range(len(problem_type['A'][i])):
                 result += f"<br>{basics[i][j]} = {problem_type['b'][i][j]}"
                 for k in range(len(problem_type['A'][i][j])):
-                    if nonBasics and j < len(nonBasics) and k < len(nonBasics[j]):
-                        if (-problem_type['A'][i][j][k] >= 0):
-                            result += f" + {abs(problem_type['A'][i][j][k])}{nonBasics[j][k]}"
-                        else:
-                            result += f" - {abs(problem_type['A'][i][j][k])}{nonBasics[j][k]}"
+                    # if nonBasics and j < len(nonBasics) and k < len(nonBasics[j]):
+                    if (-problem_type['A'][i][j][k] >= 0):
+                        result += f" + {abs(problem_type['A'][i][j][k])}{nonBasics[i][k]}"
+                    else:
+                        result += f" - {abs(problem_type['A'][i][j][k])}{nonBasics[i][k]}"
             result += '<br>'
+    print(problem_type['A'])
+    print(problem_type['non_basics'])
+    print('Result', result)
     return result        
 
 app = Flask(__name__)
@@ -135,13 +138,19 @@ def result():
         output_data += str('<br>' + '*'*33 + f'Bland' + '*'*33 + '<br>')
         optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
         
+    # Artifical variables: ['a_1']
     
-    if(len(problem.dict_steps['Aux']['A']) > 0):
+    if(len(problem.dict_steps['Aux']['A']) > 0 and len(problem.dict_steps['Prime']['A']) > 0):
         output_data += str('*'*30 + f'<b>Auxiliary Problem</b>' + '*'*30 + '<br>')
         output_data += printDictionary(problem, problem.dict_steps['Aux'])
         output_data += str('*'*30 + f'<b>Prime Problem</b>' + '*'*30 + '<br>')
-
-    output_data += printDictionary(problem, problem.dict_steps['Prime'])
+        output_data += printDictionary(problem, problem.dict_steps['Prime'])
+    elif (len(problem.dict_steps['Prime']['A']) > 0):
+        output_data += str('*'*30 + f'<b>Prime Problem</b>' + '*'*30 + '<br>')
+        output_data += printDictionary(problem, problem.dict_steps['Prime'])
+    else:
+        output_data += str('*'*30 + f'<b>Auxiliary Problem</b>' + '*'*30 + '<br>')
+        output_data += printDictionary(problem, problem.dict_steps['Aux'])
 
     if problem.status == 2: # No solution
         output_data += str('<br><b>Status: </b>No solution<br>')
