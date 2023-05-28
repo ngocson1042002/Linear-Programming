@@ -50,5 +50,3 @@ else: # ??????
     for i in range(num_variables-1):
         res += f'{solution[i]}, '
     print(res + f'{solution[num_variables-1]})')
-
-print(problem.dict_steps['var_change'])

@@ -16,6 +16,28 @@ def home():
     return render_template('home.html')
 
 @app.route('/result', methods=['POST'])
+
+def handlePrintSubVar(arr):
+    basics = []
+    # Lặp qua từng phần tử trong mảng arr
+    if(len(arr) != 0):
+        for sublist in arr:
+            temp = []
+            for item in sublist:
+                # Tách ký tự đầu tiên và hệ số sau ký tự "_"
+                character = item[0]
+                coefficient = item[2:]
+                
+                # Sử dụng phương thức format để tạo chuỗi a<sub>i</sub>
+                formatted_string = "{}<sub>{}</sub>".format(character, coefficient)
+                
+                # Thêm chuỗi đã được định dạng vào mảng tạm thời
+                temp.append(formatted_string)
+            
+            # Thêm mảng tạm vào mảng b
+            basics.append(temp)
+    return basics 
+
 def result():
     print(request.data)
     num_variables = int(request.form['numVariables'])
@@ -65,37 +87,39 @@ def result():
         output_data += str(err) + '<br>'
         output_data += str('<br>' + '*'*33 + f'Bland' + '*'*33 + '<br>')
         optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
+        
     
-    
-    print("AAAAA",problem.dict_steps['A'])
-    print("BBBBBBB",problem.dict_steps['basics'])
-    print("NNNNNNN",problem.dict_steps['non_basics'])
-    
+    # print(problem.dict_steps)
     # Xử lí output để hiển thị trong html
-    basics = []
+    # basics = handlePrintSubVar(problem.dict_steps['Prime']['basics'])
+    print(problem.dict_steps['Prime']['basics'])
+    basics = handlePrintSubVar(problem.dict_steps['Prime']['basics'])
     # Lặp qua từng phần tử trong mảng a
-    if(len(problem.dict_steps['basics']) != 0):
-        for sublist in problem.dict_steps['basics']:
-            temp = []
-            for item in sublist:
-                # Tách ký tự đầu tiên và hệ số sau ký tự "_"
-                character = item[0]
-                coefficient = item[2:]
+    # if(len(problem.dict_steps['Prime']['basics']) != 0):
+    #     for sublist in problem.dict_steps['Prime']['basics']:
+    #         temp = []
+    #         for item in sublist:
+    #             # Tách ký tự đầu tiên và hệ số sau ký tự "_"
+    #             character = item[0]
+    #             coefficient = item[2:]
                 
-                # Sử dụng phương thức format để tạo chuỗi a<sub>i</sub>
-                formatted_string = "{}<sub>{}</sub>".format(character, coefficient)
+    #             # Sử dụng phương thức format để tạo chuỗi a<sub>i</sub>
+    #             formatted_string = "{}<sub>{}</sub>".format(character, coefficient)
                 
-                # Thêm chuỗi đã được định dạng vào mảng tạm thời
-                temp.append(formatted_string)
+    #             # Thêm chuỗi đã được định dạng vào mảng tạm thời
+    #             temp.append(formatted_string)
             
-            # Thêm mảng tạm vào mảng b
-            basics.append(temp)
+    #         # Thêm mảng tạm vào mảng b
+    #         basics.append(temp)
     
+    print(basics)
     nonBasics = []
+    
+    # nonBasics = handlePrintSubVar(problem.dict_steps['Prime']['non_basics'])
 
     # Lặp qua từng phần tử trong mảng a
-    if(len(problem.dict_steps['non_basics']) != 0):
-        for sublist in problem.dict_steps['non_basics']:
+    if(len(problem.dict_steps['Prime']['non_basics']) != 0):
+        for sublist in problem.dict_steps['Prime']['non_basics']:
             temp = []
             for item in sublist:
                 # Tách ký tự đầu tiên và hệ số sau ký tự "_"
@@ -110,31 +134,32 @@ def result():
             
             # Thêm mảng tạm vào mảng b
             nonBasics.append(temp)
-    
-    print(nonBasics)
             
     result = ''
-    if(len(problem.dict_steps['optimal']) != 0):
-        for i in range(len(problem.dict_steps['optimal'])) :
+    if(len(problem.dict_steps['Prime']['optimal']) != 0):
+        for i in range(len(problem.dict_steps['Prime']['optimal'])) :
+            if (i != 0 and i-1 < len(problem.dict_steps['Prime']['status'])):
+                result += '<br><b style="color: blue;">' + problem.dict_steps['Prime']['status'][i-1] + '</b>'
+                
             result += '<br>' + '*'*30 + f'Dictionary {i + 1}' + '*'*30 + '<br><br>'
-            result += f"z = {problem.dict_steps['optimal'][i]}"
-            for j in range(len(problem.dict_steps['c'][i])):
-                if (problem.dict_steps['c'][i][j] >= 0):
-                    result += f" + {abs(problem.dict_steps['c'][i][j])}{nonBasics[i][j]}"
+            result += f"z = {problem.dict_steps['Prime']['optimal'][i]}"
+            for j in range(len(problem.dict_steps['Prime']['c'][i])):
+                if (problem.dict_steps['Prime']['c'][i][j] >= 0):
+                    result += f" + {abs(problem.dict_steps['Prime']['c'][i][j])}{nonBasics[i][j]}"
                 else:
-                    result += f" - {abs(problem.dict_steps['c'][i][j])}{nonBasics[i][j]}"
+                    result += f" - {abs(problem.dict_steps['Prime']['c'][i][j])}{nonBasics[i][j]}"
                     
                 
             result += '<br>' + '_'*problem.num_variables*8
             
-            for j in range(len(problem.dict_steps['A'][i])):
-                result += f"<br>{basics[i][j]} = {problem.dict_steps['b'][i][j]}"
-                for k in range(len(problem.dict_steps['A'][i][j])):
+            for j in range(len(problem.dict_steps['Prime']['A'][i])):
+                result += f"<br>{basics[i][j]} = {problem.dict_steps['Prime']['b'][i][j]}"
+                for k in range(len(problem.dict_steps['Prime']['A'][i][j])):
                     if nonBasics and j < len(nonBasics) and k < len(nonBasics[j]):
-                        if (-problem.dict_steps['A'][i][j][k] >= 0):
-                            result += f" + {abs(problem.dict_steps['A'][i][j][k])}{nonBasics[j][k]}"
+                        if (-problem.dict_steps['Prime']['A'][i][j][k] >= 0):
+                            result += f" + {abs(problem.dict_steps['Prime']['A'][i][j][k])}{nonBasics[j][k]}"
                         else:
-                            result += f" - {abs(problem.dict_steps['A'][i][j][k])}{nonBasics[j][k]}"
+                            result += f" - {abs(problem.dict_steps['Prime']['A'][i][j][k])}{nonBasics[j][k]}"
             result += '<br>'
     
     output_data += result
