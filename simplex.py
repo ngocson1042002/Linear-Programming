@@ -2,7 +2,7 @@ import numpy as np
 from fractions import Fraction
 import os
 
-MAX_INT = 9999999
+MAX_INT = 999999
 
 def check_same_chars(a, b):
     a = a.split()
@@ -137,6 +137,10 @@ class LinearProgramming:
 
         eq_indices  = np.where(self.signs == '=')[0]
         if len(eq_indices) > 0:
+            for i in eq_indices:
+                if b_new[i] < 0:
+                    b_new[i] *= -1
+                    A_new[i] *= -1
             signs_new[signs_new == '='] = '<='
             A_new = np.vstack((A_new, A_new[eq_indices]*(-1)))
             signs_new = np.hstack((signs_new, ['<=']*len(eq_indices)))
@@ -492,10 +496,11 @@ class LinearProgramming:
         #     return optimal_value, np.array([],dtype=self.A.dtype)
 
         if normalize_problem.arti_variables is not None:
-            l = len(np.isin(normalize_problem.arti_variables, normalize_problem.non_basics))
+            a = np.isin(normalize_problem.arti_variables, normalize_problem.non_basics)
+            l = a.size - np.count_nonzero(a==False)
 
             for i, basic in enumerate(normalize_problem.basics):
-                if normalize_problem.b[i] == 0 and np.where(normalize_problem.arti_variables == basic)[0].size:
+                if basic_solution[i] == 0 and np.where(normalize_problem.arti_variables == basic)[0].size:
                     l += 1
             if l != normalize_problem.arti_variables.size:
                 self.status = 2
