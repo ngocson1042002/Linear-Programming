@@ -18,6 +18,7 @@ def home():
 @app.route('/result', methods=['POST'])
 
 def handlePrintSubVar(arr):
+    print(1)
     basics = []
     # Lặp qua từng phần tử trong mảng arr
     if(len(arr) != 0):
