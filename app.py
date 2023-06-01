@@ -4,9 +4,9 @@ from flask import Flask, request, render_template
 import numpy as np
 from fractions import Fraction
 from simplex import LinearProgramming
+import re
 
 def handlePrintSubVar(arr):
-    print(1)
     basics = []
     # Lặp qua từng phần tử trong mảng arr
     if(len(arr) != 0):
@@ -73,10 +73,13 @@ def printDictionary(problem, problem_type):
                     else:
                         result += f" - {abs(problem_type['A'][i][j][k])}{nonBasics[i][k]}"
             result += '<br>'
-    print(problem_type['A'])
-    print(problem_type['non_basics'])
-    print('Result', result)
     return result        
+
+def replace_subscripts(string):
+    pattern = r'(\w)_(\w)'
+    repl = r'\1<sub>\2</sub>'
+    result = re.sub(pattern, repl, string)
+    return result
 
 app = Flask(__name__)
 
@@ -139,6 +142,16 @@ def result():
         optimal_value, solution = problem.optimize(type_rotate='Bland', print_details=True)
         
     # Artifical variables: ['a_1']
+    print(problem.dict_steps['var_change'])
+    if (len(problem.dict_steps['var_change']) > 0):
+        output_data += '<b>Artificial variables: '
+        for i in range(len(problem.dict_steps['var_change'])):
+            temp = replace_subscripts(problem.dict_steps['var_change'][i])
+            if (i != len(problem.dict_steps['var_change']) - 1):
+                output_data += temp + ', '
+            else:
+                output_data += temp
+    output_data += '</b><br><br>'
     
     if(len(problem.dict_steps['Aux']['A']) > 0 and len(problem.dict_steps['Prime']['A']) > 0):
         output_data += str('*'*30 + f'<b>Auxiliary Problem</b>' + '*'*30 + '<br>')
